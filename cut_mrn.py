@@ -13,6 +13,9 @@ folder_a = r'D:\DATA1\MRN\MRN'
 # 定义输出文件夹C，用于保存提取的图像
 folder_c = r'D:\DATA1\MRN\MRNi'
 
+# 定义目标图像尺寸
+target_size = (128, 128)
+
 
 # 函数：从DICOM图像中选择适当的正方形
 def select_square(image, size=128):
@@ -38,22 +41,24 @@ for root, dirs, files in os.walk(folder_a):
                 if len(image_data.shape) > 2:
                     image_data = cv2.cvtColor(image_data, cv2.COLOR_RGB2GRAY)
 
-                # 对DICOM图像进行模型预测
-                input_data = np.expand_dims(np.expand_dims(image_data, axis=-1), axis=0)
-                prediction = model.predict(input_data)[0]
+                    # 调整DICOM图像大小为模型期望的大小
+                    resized_image = cv2.resize(image_data, target_size)
 
-                # 如果预测为DICOM文件（类别为1）
-                if np.argmax(prediction) == 1:
-                    # 从DICOM图像中选择适当的正方形
-                    square = select_square(image_data)
+                    # 对DICOM图像进行模型预测
+                    input_data = np.expand_dims(np.expand_dims(resized_image, axis=-1), axis=0)
+                    prediction = model.predict(input_data)[0]
 
-                    # 调整正方形大小为128x128像素
-                    resized_square = cv2.resize(square, (128, 128))
+                    # 如果预测为DICOM文件（类别为1）
+                    if np.argmax(prediction) == 1:
+                        # 从DICOM图像中选择适当的正方形
+                        square = select_square(resized_image)
 
-                    # 保存图像到输出文件夹，使用唯一的名称
-                    output_filename = f"{os.path.basename(root)}_{filename[:-4]}.png"
-                    output_path = os.path.join(folder_c, output_filename)
-                    cv2.imwrite(output_path, resized_square)
+                        # 调整正方形大小为128x128像素
+                        resized_square = cv2.resize(square, target_size)
 
+                        # 保存图像到输出文件夹，使用唯一的名称
+                        output_filename = f"{os.path.basename(root)}_{filename[:-4]}.png"
+                        output_path = os.path.join(folder_c, output_filename)
+                        cv2.imwrite(output_path, resized_square)
 
-print("提取和分类完成。图像保存到:", folder_c)
+                        print(f"保存图像: {output_filename}")
