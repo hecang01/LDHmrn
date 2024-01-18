@@ -45,7 +45,7 @@ for root, dirs, files in os.walk(folder_a):
             # 检查是否包含有效的图像数据
             if hasattr(ds, 'pixel_array'):
                 image_data = ds.pixel_array
-                # Convert to grayscale if the image is not already
+                # 转成灰阶
                 if len(image_data.shape) > 2:
                     image_data = cv2.cvtColor(image_data, cv2.COLOR_RGB2GRAY)
                 resized_image = cv2.resize(image_data, target_size)
@@ -55,12 +55,12 @@ for root, dirs, files in os.walk(folder_a):
     # 显示 DICOM 文件夹名和计数
     current_folder = os.path.basename(root)
     dicom_folder_count += 1
-    print(f"\nProcessed {dicom_folder_count} DICOM folders. Current folder: {current_folder}\n")
+    print(f"\n Folder: {current_folder}, Total {dicom_folder_count} .\n")
 
 # 遍历文件夹 B 中的所有图像文件
 for root, dirs, files in os.walk(folder_b):
     for filename in files:
-        if filename.endswith('.jpg') or filename.endswith('.png'):
+        if filename.endswith('.png'):
             image_file = os.path.join(root, filename)
             image = cv2.imread(image_file, cv2.IMREAD_GRAYSCALE)
             resized_image = cv2.resize(image, target_size)
@@ -77,4 +77,4 @@ X_train = np.expand_dims(X_train, axis=-1)
 model.fit(X_train, Y_train, epochs=10, validation_split=0.2, callbacks=[progbar])
 
 # 保存模型
-model.save(r'D:\DATA1\MRN\model\model1.h5')
+model.save(r'D:\DATA1\MRN\model\model_cut.h5')
