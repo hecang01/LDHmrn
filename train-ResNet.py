@@ -4,6 +4,8 @@ import pydicom
 import cv2
 import tensorflow as tf
 from tensorflow.keras.callbacks import ProgbarLogger
+from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, Activation, Add, GlobalAveragePooling2D, Dense, MaxPooling2D
+from tensorflow.keras.models import Model
 
 # 输入文件夹 A，包含DICOM文件的子文件夹
 folder_a = r'D:\DATA1\MRN\MRN'
@@ -21,22 +23,53 @@ Y_train = []
 # 记录处理的 DICOM 文件夹数量
 dicom_folder_count = 0
 
-# 初始化 TensorFlow 模型或使用自定义模型
-model = tf.keras.Sequential([
-    # 添加你自己的模型层
-    tf.keras.layers.Flatten(input_shape=target_size + (1,)),
-    tf.keras.layers.Dense(128, activation='relu'),
-    tf.keras.layers.Dense(2, activation='softmax')
-])
 
-# 编译模型
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+def resnet_block(inputs, filters, kernel_size=3, strides=1):
+    x = Conv2D(filters, kernel_size=kernel_size, strides=strides, padding='same')(inputs)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+    x = Conv2D(filters, kernel_size=kernel_size, strides=strides, padding='same')(x)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+    x = Add()([x, inputs])
+    return x
+
+
+def resnet_model(input_size=(128, 128, 1), num_classes=1):
+    inputs = Input(input_size)
+
+    # 第一个卷积层
+    x = Conv2D(64, kernel_size=7, strides=2, padding='same')(inputs)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+    x = MaxPooling2D(pool_size=3, strides=2, padding='same')(x)
+
+    # 添加残差块
+    x = resnet_block(x, filters=64)
+    x = resnet_block(x, filters=64)
+
+    # 添加全局平均池化层
+    x = GlobalAveragePooling2D()(x)
+
+    # 添加一个全连接层，输出为类别数量
+    outputs = Dense(num_classes, activation='sigmoid')(x)
+
+    model = Model(inputs=inputs, outputs=outputs)
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+    return model
+
+# 初始化ResNet模型
+model = resnet_model(input_size=target_size + (1,))
 
 # 创建 ProgbarLogger 回调
 progbar = ProgbarLogger(count_mode='steps', stateful_metrics=None)
 
 # 遍历文件夹 A 中的所有子文件夹
 for root, dirs, files in os.walk(folder_a):
+    # 忽略以"-"开头的文件夹
+    dirs[:] = [d for d in dirs if not d.startswith('-')]
+
     for filename in files:
         if filename.endswith('.dcm'):
             dicom_file = os.path.join(root, filename)
@@ -73,8 +106,20 @@ Y_train = np.array(Y_train)
 # 灰阶额外维度
 X_train = np.expand_dims(X_train, axis=-1)
 
+# 划分训练集和验证集
+validation_split = 0.2
+split_index = int((1 - validation_split) * len(X_train))
+X_train, X_val = X_train[:split_index], X_train[split_index:]
+Y_train, Y_val = Y_train[:split_index], Y_train[split_index:]
+
+# 打印形状
+print("X_train shape:", X_train.shape)
+print("Y_train shape:", Y_train.shape)
+print("X_val shape:", X_val.shape)
+print("Y_val shape:", Y_val.shape)
+
 # 训练模型
-model.fit(X_train, Y_train, epochs=10, validation_split=0.2, callbacks=[progbar])
+model.fit(X_train, Y_train, epochs=10, batch_size=8, validation_data=(X_val, Y_val), callbacks=[progbar])
 
 # 保存模型
-model.save(r'D:\DATA1\MRN\model\model_cut.h5')
+model.save(r'D:\DATA1\MRN\model\model_resnet.h5')
