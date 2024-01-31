@@ -1,10 +1,10 @@
 import os
+import cv2
 import numpy as np
 import pydicom
-import cv2
-import tensorflow as tf
 from tensorflow.keras.callbacks import ProgbarLogger
-from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, Activation, Add, GlobalAveragePooling2D, Dense, MaxPooling2D
+from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, Activation, Add, GlobalAveragePooling2D, Dense, \
+    MaxPooling2D, Layer
 from tensorflow.keras.models import Model
 
 # 输入文件夹 A，包含DICOM文件的子文件夹
@@ -22,7 +22,6 @@ Y_train = []
 
 # 记录处理的 DICOM 文件夹数量
 dicom_folder_count = 0
-
 
 def resnet_block(inputs, filters, kernel_size=3, strides=1):
     x = Conv2D(filters, kernel_size=kernel_size, strides=strides, padding='same')(inputs)
@@ -58,6 +57,7 @@ def resnet_model(input_size=(128, 128, 1), num_classes=1):
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
     return model
+
 
 # 初始化ResNet模型
 model = resnet_model(input_size=target_size + (1,))
