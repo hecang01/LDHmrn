@@ -75,15 +75,18 @@ for root, dirs, files in os.walk(folder_a):
             dicom_file = os.path.join(root, filename)
             ds = pydicom.dcmread(dicom_file)
 
-            # 检查是否包含有效的图像数据
-            if hasattr(ds, 'pixel_array'):
-                image_data = ds.pixel_array
-                # 转成灰阶
-                if len(image_data.shape) > 2:
-                    image_data = cv2.cvtColor(image_data, cv2.COLOR_RGB2GRAY)
-                resized_image = cv2.resize(image_data, target_size)
-                X_train.append(resized_image)
-                Y_train.append(1)  # DICOM文件标记为1
+            # 检查 Protocol Name 是否为指定的值
+            protocol_name = ds.get('ProtocolName', '')
+            if protocol_name in ['t2_de3d_we_cor_iso', 'PROSET']:
+                # 检查是否包含有效的图像数据
+                if hasattr(ds, 'pixel_array'):
+                    image_data = ds.pixel_array
+                    # 转成灰阶
+                    if len(image_data.shape) > 2:
+                        image_data = cv2.cvtColor(image_data, cv2.COLOR_RGB2GRAY)
+                    resized_image = cv2.resize(image_data, target_size)
+                    X_train.append(resized_image)
+                    Y_train.append(1)  # DICOM文件标记为1
 
     # 显示 DICOM 文件夹名和计数
     current_folder = os.path.basename(root)
