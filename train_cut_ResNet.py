@@ -4,7 +4,7 @@ import numpy as np
 import pydicom
 from tensorflow.keras.callbacks import ProgbarLogger
 from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, Activation, Add, GlobalAveragePooling2D, Dense, \
-    MaxPooling2D, Layer
+    MaxPooling2D
 from tensorflow.keras.models import Model
 
 # 输入文件夹 A，包含DICOM文件的子文件夹

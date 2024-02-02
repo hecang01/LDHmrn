@@ -1,11 +1,10 @@
 import os
+import cv2
 import numpy as np
 import pydicom
-import cv2
 import tensorflow as tf
 from tensorflow.keras.callbacks import ProgbarLogger
 from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, concatenate
-from tensorflow.keras.utils import to_categorical
 
 # 输入文件夹 A，包含DICOM文件的子文件夹
 folder_a = r'D:\DATA1\MRN\MRN'
@@ -116,18 +115,24 @@ split_index = int((1 - validation_split) * len(X_train))
 X_train, X_val = X_train[:split_index], X_train[split_index:]
 Y_train, Y_val = Y_train[:split_index], Y_train[split_index:]
 
+# 修改形状以匹配图像的大小
+Y_train = np.expand_dims(Y_train, axis=1)  # 扩展维度
+Y_train = np.expand_dims(Y_train, axis=2)
+Y_val = np.expand_dims(Y_val, axis=1)
+Y_val = np.expand_dims(Y_val, axis=2)
+Y_train = np.repeat(Y_train, 128, axis=1)  # 重复数组
+Y_train = np.repeat(Y_train, 128, axis=2)
+Y_val = np.repeat(Y_val, 128, axis=1)
+Y_val = np.repeat(Y_val, 128, axis=2)
+
+# 打印形状
 print("X_train shape:", X_train.shape)
 print("Y_train shape:", Y_train.shape)
 print("X_val shape:", X_val.shape)
 print("Y_val shape:", Y_val.shape)
 
-# 将标签数据进行独热编码
-Y_train_encoded = to_categorical(Y_train, num_classes=2)
-Y_val_encoded = to_categorical(Y_val, num_classes=2)
-
 # 训练模型
-model.fit(X_train, Y_train_encoded, epochs=10, batch_size=8,
-          validation_data=(X_val, Y_val_encoded), callbacks=[progbar])
+model.fit(X_train, Y_train, epochs=10, batch_size=8, validation_data=(X_val, Y_val), callbacks=[progbar])
 
 # 保存模型
-model.save(r'D:\DATA1\MRN\model\model_cut.h5')
+model.save(r'D:\DATA1\MRN\model\model_UNet.h5')
