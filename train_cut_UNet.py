@@ -78,7 +78,7 @@ for root, dirs, files in os.walk(folder_a):
             dicom_file = os.path.join(root, filename)
             ds = pydicom.dcmread(dicom_file)
 
-            # 检查 Protocol Name 是否为指定的值
+            # 选取指定序列
             protocol_name = ds.get('ProtocolName', '')
             if protocol_name in ['t2_de3d_we_cor_iso', 'PROSET']:
                 # 检查是否包含有效的图像数据
@@ -94,7 +94,7 @@ for root, dirs, files in os.walk(folder_a):
     # 显示 DICOM 文件夹名和计数
     current_folder = os.path.basename(root)
     dicom_folder_count += 1
-    print(f"\n Folder: {current_folder}, Total {dicom_folder_count} .\n")
+    print(f"\n Folder: {current_folder}, Total {dicom_folder_count}.\n")
 
 # 遍历文件夹 B 中的所有图像文件
 for root, dirs, files in os.walk(folder_b):
@@ -138,4 +138,21 @@ print("Y_val shape:", Y_val.shape)
 model.fit(X_train, Y_train, epochs=10, batch_size=8, validation_data=(X_val, Y_val), callbacks=[progbar])
 
 # 保存模型
-model.save(r'D:\DATA1\MRN\model\model_UNet.h5')
+model_dir = r'D:\DATA1\MRN\model'
+model_name = 'model_cut_UNet.h5'
+
+# 检查是否已存在同名文件
+if os.path.exists(os.path.join(model_dir, model_name)):
+    # 寻找可用的文件名
+    i = 1
+    while os.path.exists(os.path.join(model_dir, f"{os.path.splitext(model_name)[0]}_{i}.h5")):
+        i += 1
+    # 添加序号并保存模型
+    model.save(os.path.join(model_dir, f"{os.path.splitext(model_name)[0]}_{i}.h5"))
+    print(f"Saved: {os.path.join(model_dir, f'{os.path.splitext(model_name)[0]}_{i}.h5')}")
+else:
+    # 直接保存模型
+    model.save(os.path.join(model_dir, model_name))
+    print(f"Saved: {os.path.join(model_dir, model_name)}")
+
+print("\n Done.")

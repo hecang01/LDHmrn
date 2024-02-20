@@ -6,7 +6,7 @@ import tensorflow as tf
 from concurrent.futures import ThreadPoolExecutor
 
 # 加载训练好的模型
-model = tf.keras.models.load_model(r'D:\DATA1\MRN\model\model_cut.h5')
+model = tf.keras.models.load_model(r'D:\DATA1\MRN\model\model_cut_ResNet.h5')
 
 # 定义文件夹A，包含DICOM文件的子文件夹
 folder_a = r'D:\DATA1\MRN\MRN'
@@ -33,15 +33,24 @@ def select_square(image, size=128):
 
 
 # 遍历文件夹A中的DICOM文件
-def process_dicom_file(dicom_file):
-    ds = pydicom.dcmread(dicom_file)
+for root, dirs, files in os.walk(folder_a):
+    # 忽略以"-"开头的文件夹
+    dirs[:] = [d for d in dirs if not d.startswith('-')]
 
-    # 检查DICOM文件是否包含有效的图像数据
-    if hasattr(ds, 'pixel_array'):
-        image_data = ds.pixel_array
-        # 如果图像不是灰度图，则转换为灰度图
-        if len(image_data.shape) > 2:
-            image_data = cv2.cvtColor(image_data, cv2.COLOR_RGB2GRAY)
+    for filename in files:
+        if filename.endswith('.dcm'):
+            dicom_file = os.path.join(root, filename)
+            ds = pydicom.dcmread(dicom_file)
+
+            # 选取指定序列
+            protocol_name = ds.get('ProtocolName', '')
+            if protocol_name in ['t2_de3d_we_cor_iso', 'PROSET']:
+                # 检查是否包含有效的图像数据
+                if hasattr(ds, 'pixel_array'):
+                    image_data = ds.pixel_array
+                    # 转成灰阶
+                    if len(image_data.shape) > 2:
+                        image_data = cv2.cvtColor(image_data, cv2.COLOR_RGB2GRAY)
 
         # 调整DICOM图像大小为模型期望的大小
         resized_image = cv2.resize(image_data, target_size)
@@ -59,7 +68,7 @@ def process_dicom_file(dicom_file):
             # 如果无法选择到合适的图像，跳过当前DICOM文件
             if square is None:
                 print(f"未能选择到合适的图像，跳过: {os.path.basename(dicom_file)}")
-                return
+                continue
 
             # 调整正方形大小为128x128像素
             resized_square = cv2.resize(square, target_size)
