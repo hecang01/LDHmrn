@@ -23,6 +23,10 @@ Y_train = []
 # 记录处理的 DICOM 文件夹数量
 dicom_folder_count = 0
 
+# 超参数
+epochs = 10
+batch_size = 8
+
 def resnet_block(inputs, filters, kernel_size=3, strides=1):
     x = Conv2D(filters, kernel_size=kernel_size, strides=strides, padding='same')(inputs)
     x = BatchNormalization()(x)
@@ -122,11 +126,11 @@ print("X_val shape:", X_val.shape)
 print("Y_val shape:", Y_val.shape)
 
 # 训练模型
-model.fit(X_train, Y_train, epochs=10, batch_size=8, validation_data=(X_val, Y_val), callbacks=[progbar])
+model.fit(X_train, Y_train, epochs=epochs, batch_size=batch_size, validation_data=(X_val, Y_val), callbacks=[progbar])
 
 # 保存模型
 model_dir = r'D:\DATA1\MRN\model'
-model_name = 'model_cut_ResNet.h5'
+model_name = f'model_cut_ResNet_{epochs}_{batch_size}.h5'
 
 # 检查是否已存在同名文件
 if os.path.exists(os.path.join(model_dir, model_name)):

@@ -18,6 +18,10 @@ Y_train = []
 # 记录处理的 DICOM 文件夹数量
 dicom_folder_count = 0
 
+# 超参数
+epochs = 10
+batch_size = 8
+
 # 遍历文件夹 A 中的所有子文件夹
 for root, dirs, files in os.walk(folder_a):
     # 忽略以"-"开头的文件夹
@@ -69,11 +73,11 @@ model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=
 progbar = ProgbarLogger(count_mode='steps', stateful_metrics=None)
 
 # 训练模型
-model.fit(X_train_reshaped, Y_train, epochs=10, validation_split=0.2, callbacks=[progbar])
+model.fit(X_train_reshaped, Y_train, epochs=epochs, batch_size=batch_size, validation_split=0.2, callbacks=[progbar])
 
 # 保存模型
 model_dir = r'D:\DATA1\MRN\model'
-model_name = 'model_cut_VGG16.h5'
+model_name = f'model_cut_VGG16_{epochs}_{batch_size}.h5'
 
 # 检查是否已存在同名文件
 if os.path.exists(os.path.join(model_dir, model_name)):
