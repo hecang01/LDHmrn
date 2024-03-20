@@ -19,8 +19,8 @@ Y_train = []
 dicom_folder_count = 0
 
 # 超参数
-epochs = 10
-batch_size = 8
+epochs = 20
+batch_size = 16
 
 # 遍历文件夹 A 中的所有子文件夹
 for root, dirs, files in os.walk(folder_a):

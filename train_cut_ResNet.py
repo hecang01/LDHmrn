@@ -24,7 +24,7 @@ Y_train = []
 dicom_folder_count = 0
 
 # 超参数
-epochs = 10
+epochs = 20
 batch_size = 8
 
 def resnet_block(inputs, filters, kernel_size=3, strides=1):
@@ -61,7 +61,6 @@ def resnet_model(input_size=(128, 128, 1), num_classes=1):
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
     return model
-
 
 # 初始化ResNet模型
 model = resnet_model(input_size=target_size + (1,))

@@ -23,7 +23,7 @@ Y_train = []
 dicom_folder_count = 0
 
 # 超参数
-epochs = 10
+epochs = 20
 batch_size = 8
 
 def unet_model(input_size=(128, 128, 1)):
