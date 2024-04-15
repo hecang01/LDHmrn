@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 
 # 加载训练好的模型
-model = tf.keras.models.load_model(r'D:\DATA1\MRN\model\model2.h5')
+model = tf.keras.models.load_model(r'D:\DATA1\MRN\model\model_cut_VGG16_20_16.h5')
 
 # 定义文件夹A，包含DICOM文件的子文件夹
 folder_a = r'D:\DATA1\MRN\MRN'

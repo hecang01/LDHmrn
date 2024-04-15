@@ -4,7 +4,7 @@ import numpy as np
 import pydicom
 from tensorflow.keras.callbacks import ProgbarLogger
 from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, Activation, Add, GlobalAveragePooling2D, Dense, \
-    MaxPooling2D
+    MaxPooling2D, Concatenate
 from tensorflow.keras.models import Model
 
 # 输入文件夹 A，包含DICOM文件的子文件夹
@@ -16,6 +16,11 @@ folder_b = r'D:\DATA1\MRN\MRNt'
 # 定义目标图像尺寸
 target_size = (128, 128)
 
+# 定义保存缩放比例和截取位置信息的列表
+scale_factors = []
+start_rows = []
+start_cols = []
+
 # 创建一个用于存储训练数据的列表
 X_train = []
 Y_train = []
@@ -25,7 +30,7 @@ dicom_folder_count = 0
 
 # 超参数
 epochs = 20
-batch_size = 8
+batch_size = 12
 
 def resnet_block(inputs, filters, kernel_size=3, strides=1):
     x = Conv2D(filters, kernel_size=kernel_size, strides=strides, padding='same')(inputs)
@@ -84,12 +89,26 @@ for root, dirs, files in os.walk(folder_a):
                 # 检查是否包含有效的图像数据
                 if hasattr(ds, 'pixel_array'):
                     image_data = ds.pixel_array
-                    # 转成灰阶
-                    if len(image_data.shape) > 2:
-                        image_data = cv2.cvtColor(image_data, cv2.COLOR_RGB2GRAY)
-                    resized_image = cv2.resize(image_data, target_size)
+
+                    # 计算缩放比例
+                    original_height, original_width = image_data.shape
+                    scale_factor = target_size[0] / max(original_height, original_width)
+
+                    # 缩放图像
+                    resized_image = cv2.resize(image_data, None, fx=scale_factor, fy=scale_factor)
+
+                    # 如果图像是多通道的，转换为灰度图
+                    if len(resized_image.shape) > 2:
+                        resized_image = cv2.cvtColor(resized_image, cv2.COLOR_RGB2GRAY)
+
+                    # 将图像数据添加到训练集中
                     X_train.append(resized_image)
                     Y_train.append(1)  # DICOM文件标记为1
+
+                    # 保存缩放比例和截取位置信息
+                    scale_factors.append(scale_factor)
+                    start_rows.append(max(0, (resized_image.shape[0] - target_size[0]) // 2))
+                    start_cols.append(max(0, (resized_image.shape[1] - target_size[1]) // 2))
 
     # 显示 DICOM 文件夹名和计数
     current_folder = os.path.basename(root)
@@ -101,11 +120,13 @@ for root, dirs, files in os.walk(folder_b):
     for filename in files:
         if filename.endswith('.png'):
             image_file = os.path.join(root, filename)
+            # 以彩色模式读取图像
             image = cv2.imread(image_file, cv2.IMREAD_GRAYSCALE)
             resized_image = cv2.resize(image, target_size)
             X_train.append(resized_image)
             Y_train.append(0)  # 图像文件标记为0
 
+# 转换为 numpy 数组
 X_train = np.array(X_train)
 Y_train = np.array(Y_train)
 
@@ -118,14 +139,9 @@ split_index = int((1 - validation_split) * len(X_train))
 X_train, X_val = X_train[:split_index], X_train[split_index:]
 Y_train, Y_val = Y_train[:split_index], Y_train[split_index:]
 
-# 打印形状
-print("X_train shape:", X_train.shape)
-print("Y_train shape:", Y_train.shape)
-print("X_val shape:", X_val.shape)
-print("Y_val shape:", Y_val.shape)
-
 # 训练模型
-model.fit(X_train, Y_train, epochs=epochs, batch_size=batch_size, validation_data=(X_val, Y_val), callbacks=[progbar])
+model.fit(X_train, Y_train, epochs=epochs, batch_size=batch_size, validation_data=(X_val, Y_val), callbacks=[progbar],
+          sample_weight=[scale_factors[:split_index], start_rows[:split_index], start_cols[:split_index]])
 
 # 保存模型
 model_dir = r'D:\DATA1\MRN\model'

@@ -6,7 +6,7 @@ import tensorflow as tf
 from concurrent.futures import ThreadPoolExecutor
 
 # 加载训练好的模型
-model = tf.keras.models.load_model(r'D:\DATA1\MRN\model\model_cut_ResNet.h5')
+model = tf.keras.models.load_model(r'D:\DATA1\MRN\model\model_cut_UNet.h5')
 
 # 定义文件夹A，包含DICOM文件的子文件夹
 folder_a = r'D:\DATA1\MRN\MRN'
