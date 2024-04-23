@@ -1,9 +1,10 @@
+# 模型全黑
+
 import os
 import cv2
 import pydicom
 import numpy as np
 import tensorflow as tf
-from concurrent.futures import ThreadPoolExecutor
 
 # 加载训练好的模型
 model = tf.keras.models.load_model(r'D:\DATA1\MRN\model\model_cut_UNet.h5')

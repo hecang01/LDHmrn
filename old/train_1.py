@@ -1,3 +1,5 @@
+# 显存不足，废弃
+
 import os
 import numpy as np
 import cv2
@@ -15,7 +17,7 @@ folder_C_path = r'D:\DATA1\MRN\model'
 
 # 超参数
 epochs = 10
-batch_size = 8
+batch_size = 4
 
 # 加载文件夹A中的PNG图像，并转换为具有三个通道的灰度图像
 def load_images_from_folder(folder):
@@ -36,17 +38,22 @@ def extract_images_from_dicom(folder):
             if file.endswith('.dcm'):
                 dcm_file = os.path.join(subdir, file)
                 ds = pydicom.dcmread(dcm_file)
-                if hasattr(ds, 'PixelData'):
-                    pixel_array = ds.pixel_array
-                    if pixel_array is not None:
-                        # 调整图像大小
-                        pixel_array = cv2.resize(pixel_array, (128, 128))
-                        # 检查图像的通道数
-                        if len(pixel_array.shape) == 3:  # 如果图像已经是三通道的，不需要转换
-                            images.append(pixel_array)
-                        else:  # 否则将图像转换为具有三个通道的格式
-                            pixel_array = cv2.cvtColor(pixel_array, cv2.COLOR_GRAY2BGR)
-                            images.append(pixel_array)
+
+                # 选取指定序列
+                protocol_name = ds.get('ProtocolName', '')
+                if protocol_name in ['t2_de3d_we_cor_iso', 'PROSET']:
+
+                    if hasattr(ds, 'PixelData'):
+                        pixel_array = ds.pixel_array
+                        if pixel_array is not None:
+                            # 调整图像大小
+                            pixel_array = cv2.resize(pixel_array, (128, 128))
+                            # 检查图像的通道数
+                            if len(pixel_array.shape) == 3:  # 如果图像已经是三通道的，不需要转换
+                                images.append(pixel_array)
+                            else:  # 否则将图像转换为具有三个通道的格式
+                                pixel_array = cv2.cvtColor(pixel_array, cv2.COLOR_GRAY2BGR)
+                                images.append(pixel_array)
     return np.array(images)
 
 # 加载并处理数据

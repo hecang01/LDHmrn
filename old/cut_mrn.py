@@ -1,3 +1,5 @@
+# 模型出错
+
 import os
 import cv2
 import pydicom
