@@ -13,7 +13,7 @@ from tensorflow.keras.models import Model
 folder_a = r'D:\DATA1\MRN\MRN'
 
 # 输入文件夹 B，包含类似的图像文件
-folder_b = r'D:\DATA1\MRN\MRNt'
+folder_b = r'D:\DATA1\MRN\MRN_train'
 
 # 定义目标图像尺寸
 target_size = (128, 128)
