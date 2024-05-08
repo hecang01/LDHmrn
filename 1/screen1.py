@@ -12,7 +12,7 @@ saved_features = np.load(r'D:\DATA1\MRN\model\1.npy')
 
 # 设置目录路径
 input_dir = r'D:\DATA1\MRN\MRN_cut'
-output_dir = r'D:\MRN_s'
+output_dir = r'D:\DATA1\MRN\MRN_s'
 
 # 定义特征提取函数
 def extract_features(img_path):
