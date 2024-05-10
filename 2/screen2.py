@@ -1,10 +1,11 @@
 import os
 import shutil
 import numpy as np
+import openpyxl
+import pydicom
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.resnet50 import preprocess_input
-import pydicom
 from PIL import Image
 
 # 加载预训练的ResNet模型和特征
@@ -14,6 +15,11 @@ saved_features = np.load(r'D:\DATA1\MRN\model\1.npy')
 # 设置目录路径
 input_dicom_folder = r'D:\DATA1\MRN\MRN'
 output_folder = r'D:\MRN_s'
+
+# 错误列表
+wb = openpyxl.Workbook()
+ws = wb.active
+ws.append(["Filename", "Error Message"])
 
 # 定义特征提取函数
 def extract_features_from_file(img_path):
@@ -65,36 +71,47 @@ for root, dirs, files in os.walk(input_dicom_folder):
                             # 截取正方形图像
                             cropped_image = resized_image[i - 64:i + 64, j - 64:j + 64]
 
-                            # 将截取后的图像保存为临时文件
-                            temp_img_path = os.path.join(output_folder, 'temp.png')
-                            Image.fromarray(cropped_image.astype(np.uint8)).save(temp_img_path)
+                            try:
 
-                            # 提取特征并判断相似度
-                            img_features = extract_features_from_file(temp_img_path)
+                                # 将截取后的图像保存为临时文件
+                                temp_img_path = os.path.join(output_folder, 'temp.png')
+                                Image.fromarray(cropped_image.astype(np.uint8)).save(temp_img_path)
 
-                            # 判断特征是否类似
-                            similarity_threshold = 0.016
+                                # 提取特征并判断相似度
+                                img_features = extract_features_from_file(temp_img_path)
 
-                            # 计算整体图片的相似度分数
-                            similarity_score = cosine_similarity(saved_features, img_features)
-                            average_similarity_score = np.mean(similarity_score)
+                                # 判断特征是否类似
+                                similarity_threshold = 0.016
 
-                            # 打印特征之间的相似度分数
-                            print("Filename:", filename)
-                            print("Similarity Score:", average_similarity_score)
+                                # 计算整体图片的相似度分数
+                                similarity_score = cosine_similarity(saved_features, img_features)
+                                average_similarity_score = np.mean(similarity_score)
 
-                            if average_similarity_score > similarity_threshold:
-                                # 将图片保存到目标文件夹，保留子文件夹目录和文件名
-                                output_sub_folder = os.path.join(output_folder,
-                                                                 os.path.basename(os.path.dirname(dicom_file)))
-                                os.makedirs(output_sub_folder, exist_ok=True)
+                                # 打印特征之间的相似度分数
+                                print("Filename:", filename)
+                                print("Similarity Score:", average_similarity_score)
 
-                                # 生成唯一的文件名避免重复
-                                index = 1
-                                output_filename = os.path.join(output_sub_folder, f"{filename[:-4]}_{i}_{j}_{index}.png")
-                                while os.path.exists(output_filename):
-                                    index += 1
+                                if average_similarity_score > similarity_threshold:
+                                    # 将图片保存到目标文件夹，保留子文件夹目录和文件名
+                                    output_sub_folder = os.path.join(output_folder,
+                                                                     os.path.basename(os.path.dirname(dicom_file)))
+                                    os.makedirs(output_sub_folder, exist_ok=True)
+
+                                    # 生成唯一的文件名避免重复
+                                    index = 1
                                     output_filename = os.path.join(output_sub_folder, f"{filename[:-4]}_{i}_{j}_{index}.png")
+                                    while os.path.exists(output_filename):
+                                        index += 1
+                                        output_filename = os.path.join(output_sub_folder, f"{filename[:-4]}_{i}_{j}_{index}.png")
 
-                                shutil.copy(temp_img_path, output_filename)
+                                    shutil.copy(temp_img_path, output_filename)
 
+                            except Exception as e:
+                                print(f"Error processing file: {filename}")
+                                print(f"Error message: {str(e)}")
+
+                                # 如果出错，将出错文件名写入Excel
+                                ws.append([filename, str(e)])
+
+# 保存Excel文件
+wb.save(r'D:\MRN_s\error.xlsx')
