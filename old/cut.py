@@ -3,6 +3,8 @@ import pydicom
 import numpy as np
 from PIL import Image
 
+# 切割原始的dicom文件为多个128*128的图片
+
 # 指定输入和输出文件夹路径
 input_folder = r'D:\DATA1\MRN\MRN'
 output_folder = r'D:\DATA1\MRN\MRN_cut'

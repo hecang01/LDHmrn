@@ -4,6 +4,8 @@ from tensorflow.keras.applications.resnet50 import preprocess_input
 import numpy as np
 import os
 
+# 训练图片特征
+
 # 设置数据路径
 data_dir = 'D:/DATA1/MRN/MRN_train'
 output_dir = 'D:/DATA1/MRN/model'

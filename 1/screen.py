@@ -8,6 +8,8 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.resnet50 import preprocess_input
 from PIL import Image
 
+# 切割dicom得到的128*128图片，并初步筛选
+
 # 加载预训练的ResNet模型和特征
 model = load_model(r'D:\DATA1\MRN\model\1.h5')
 saved_features = np.load(r'D:\DATA1\MRN\model\1.npy')
