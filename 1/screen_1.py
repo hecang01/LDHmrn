@@ -18,6 +18,9 @@ saved_features = np.load(r'D:\DATA1\MRN\model\1.npy')
 input_dicom_folder = r'D:\DATA1\MRN\MRN'
 output_folder = r'D:\MRN_s'
 
+# 阈值设定
+similarity_num = 0.016
+
 # 错误列表
 wb = openpyxl.Workbook()
 ws = wb.active
@@ -83,7 +86,7 @@ for root, dirs, files in os.walk(input_dicom_folder):
                                 img_features = extract_features_from_file(temp_img_path)
 
                                 # 判断特征是否类似
-                                similarity_threshold = 0.016
+                                similarity_threshold = similarity_num
 
                                 # 计算整体图片的相似度分数
                                 similarity_score = cosine_similarity(saved_features, img_features)

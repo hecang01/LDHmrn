@@ -1,3 +1,5 @@
+# 磁盘利用太多，合并到screen.py
+
 import os
 import pydicom
 import numpy as np

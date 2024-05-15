@@ -1,3 +1,5 @@
+# 磁盘利用太多，废弃
+
 import os
 import shutil
 import numpy as np
