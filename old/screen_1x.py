@@ -1,4 +1,7 @@
+# 修改为直接保存dicom图像，废弃
+
 import os
+import shutil
 import numpy as np
 import openpyxl
 import pydicom
@@ -6,6 +9,8 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.resnet50 import preprocess_input
 from PIL import Image
+
+# 切割dicom得到的128*128图片，并初步筛选
 
 # 加载预训练的ResNet模型和特征
 model = load_model(r'D:\DATA1\MRN\model\1.h5')
@@ -67,9 +72,6 @@ for root, dirs, files in os.walk(input_dicom_folder):
                     # 缩放图像到500*500
                     resized_image = np.array(pil_image.resize((500, 500), Image.LANCZOS))
 
-                    # 标志是否找到符合条件的图像区域
-                    found = False
-
                     # 切割并判断图像是否符合特征
                     for i in range(200, 350, 25):
                         for j in range(200, 350, 25):
@@ -77,38 +79,46 @@ for root, dirs, files in os.walk(input_dicom_folder):
                             cropped_image = resized_image[i - 64:i + 64, j - 64:j + 64]
 
                             try:
+
                                 # 将截取后的图像保存为临时文件
                                 temp_img_path = os.path.join(output_folder, 'temp.png')
                                 Image.fromarray(cropped_image.astype(np.uint8)).save(temp_img_path)
 
                                 # 提取特征并判断相似度
                                 img_features = extract_features_from_file(temp_img_path)
+
+                                # 判断特征是否类似
+                                similarity_threshold = similarity_num
+
+                                # 计算整体图片的相似度分数
                                 similarity_score = cosine_similarity(saved_features, img_features)
                                 average_similarity_score = np.mean(similarity_score)
 
+                                # 打印特征之间的相似度分数
                                 print("Filename:", filename)
                                 print("Similarity Score:", average_similarity_score)
 
-                                if average_similarity_score > similarity_num:
-                                    # 如果找到符合条件的图像区域，缩放并保存整个原始图像
-                                    found = True
+                                if average_similarity_score > similarity_threshold:
+                                    # 将图片保存到目标文件夹，保留子文件夹目录和文件名
                                     output_sub_folder = os.path.join(output_folder,
                                                                      os.path.basename(os.path.dirname(dicom_file)))
                                     os.makedirs(output_sub_folder, exist_ok=True)
 
-                                    # 缩放整个原始图像到1280*1280
-                                    large_resized_image = np.array(pil_image.resize((1280, 1280), Image.LANCZOS))
-                                    output_filename = os.path.join(output_sub_folder, f"{filename[:-4]}_1280x1280.png")
-                                    Image.fromarray(large_resized_image.astype(np.uint8)).save(output_filename)
-                                    break
+                                    # 生成唯一的文件名避免重复
+                                    index = 1
+                                    output_filename = os.path.join(output_sub_folder, f"{filename[:-4]}_{i}_{j}_{index}.png")
+                                    while os.path.exists(output_filename):
+                                        index += 1
+                                        output_filename = os.path.join(output_sub_folder, f"{filename[:-4]}_{i}_{j}_{index}.png")
+
+                                    shutil.copy(temp_img_path, output_filename)
 
                             except Exception as e:
                                 print(f"Error processing file: {filename}")
                                 print(f"Error message: {str(e)}")
-                                ws.append([filename, str(e)])
 
-                        if found:
-                            break  # 跳过并处理下一个文件
+                                # 如果出错，将出错文件名写入Excel
+                                ws.append([filename, str(e)])
 
 # 保存Excel文件
 wb.save(r'D:\MRN_s\error.xlsx')
