@@ -5,6 +5,7 @@ from tensorflow.keras.applications.resnet50 import preprocess_input
 import numpy as np
 import os
 
+# 准确率低，更改模型
 # 数据增强参数
 datagen = ImageDataGenerator(
     rescale=1. / 255,

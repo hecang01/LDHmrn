@@ -4,6 +4,7 @@ from tensorflow.keras.applications.resnet50 import preprocess_input
 import numpy as np
 import os
 
+# 废弃，准确率低
 # 训练阳性图片特征
 
 # 设置数据路径

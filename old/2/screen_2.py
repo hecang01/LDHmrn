@@ -6,6 +6,7 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.resnet50 import preprocess_input
 from PIL import Image
 
+# 废弃，准确率低
 # 二次筛选
 
 # 加载预训练的ResNet模型和特征

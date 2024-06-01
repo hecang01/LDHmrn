@@ -11,7 +11,6 @@ model_dir = r'D:\temp\model'
 
 # 加载模型和分类器
 base_model = ResNet50(weights=None, include_top=False, pooling='avg')
-# base_model.load_weights(os.path.join(model_dir, 'model.h5'))
 cnn_model = load_model(os.path.join(model_dir, 'cnn_classifier.h5'))
 
 # 特征提取函数

@@ -4,6 +4,7 @@ from PIL import Image
 from tensorflow.keras import layers, models
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
+# 小窗验证，废弃，加入阴性训练
 # 文件目录
 train_dir = r'D:\DATA1\MRN\MRN_s'
 augmentation_dir = r'D:\DATA1\MRN\pos1'
