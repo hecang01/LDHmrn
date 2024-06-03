@@ -1,8 +1,10 @@
 import os
 import numpy as np
-from tensorflow.keras.models import load_model
 import pydicom
 from PIL import Image
+from tensorflow.keras.models import load_model
+
+# 筛选保存为灰度图像
 
 # 加载CNN模型
 model = load_model(r'D:\DATA1\MRN\model\MRN_model.h5')
@@ -50,4 +52,4 @@ for root, dirs, files in os.walk(input_dicom_folder):
                         output_sub_folder = os.path.join(output_folder, os.path.basename(os.path.dirname(dicom_file)))
                         os.makedirs(output_sub_folder, exist_ok=True)
                         output_filename = os.path.join(output_sub_folder, f"{filename[:-4]}_1.png")
-                        Image.fromarray(original_image.astype(np.uint8)).save(output_filename)
+                        Image.fromarray(original_image.astype(np.uint8), mode='L').save(output_filename)

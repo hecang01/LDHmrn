@@ -6,6 +6,8 @@ from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.optimizers import Adam
 from sklearn.model_selection import train_test_split
 
+# 重写特征版本，准确率低，重置
+
 # 设置数据路径
 model_dir = r'D:\temp\model'
 

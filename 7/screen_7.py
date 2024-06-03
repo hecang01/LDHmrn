@@ -36,12 +36,13 @@ for root, dirs, files in os.walk(image_dir):
                 image_path = os.path.join(root, filename)
                 original_img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)  # 读取灰度图像
                 original_img = cv2.resize(original_img, (1280, 1280))  # 确保图像大小为1280x1280
-                marked_img = cv2.cvtColor(original_img, cv2.COLOR_GRAY2BGR)  # 转换为BGR图像
+                marked_img = original_img.copy()
 
                 for y in range(0, 1280 - window_size[1] + 1, step_size):
                     for x in range(0, 1280 - window_size[0] + 1, step_size):
                         # 裁剪窗口
                         window = original_img[y:y + window_size[1], x:x + window_size[0]]
+                        window = (window * 255).astype(np.uint8)
 
                         # 保存当前窗口的小方块
                         window_filename = f"{filename}_x{x}_y{y}.png"
@@ -50,7 +51,7 @@ for root, dirs, files in os.walk(image_dir):
 
                         window = np.expand_dims(window, axis=0)  # 增加批量维度
                         window = np.expand_dims(window, axis=-1)  # 添加通道维度
-                        window = window.astype(np.float32) / 255.0  # 归一化
+                        window = window.astype(np.float32)  # 不再进行归一化
 
                         # 使用CNN模型预测窗口的相似性
                         similarity = model.predict(window)[0][0]

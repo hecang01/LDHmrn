@@ -1,13 +1,15 @@
 import os
 import numpy as np
-from tensorflow.keras.preprocessing import image
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, Input
-from tensorflow.keras.optimizers import Adam
-from sklearn.model_selection import train_test_split
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from PIL import Image
 import tensorflow as tf
+from PIL import Image
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+# 使用CNNs训练。注意力集中在中轴
 
 # 设置数据路径
 pos_data_dir = 'D:/DATA1/MRN/MRN_train_pos'  # 阳性样本目录
@@ -40,6 +42,9 @@ def load_data(pos_data_dir, neg_data_dir):
     labels = np.array(labels).reshape(-1, 1)  # 确保标签形状
     return images, labels
 
+# 加载数据
+images, labels = load_data(pos_data_dir, neg_data_dir)
+
 # 生成掩码
 def create_center_mask(height, width, center_fraction=0.25):
     mask = np.zeros((height, width), dtype=np.float32)
@@ -47,9 +52,6 @@ def create_center_mask(height, width, center_fraction=0.25):
     start = (width - center_width) // 2
     mask[:, start:start + center_width] = 1.0
     return mask
-
-# 加载数据
-images, labels = load_data(pos_data_dir, neg_data_dir)
 
 # 生成掩码
 img_height, img_width = 256, 256
@@ -108,7 +110,7 @@ batch_size = 64
 steps_per_epoch = len(X_train) // batch_size
 validation_steps = len(X_val) // batch_size
 
-# 定义自定义训练步骤，以包括掩码
+# 定义训练步骤，包括掩码
 @tf.function
 def train_step(img_batch, label_batch, mask_batch):
     with tf.GradientTape() as tape:
@@ -135,5 +137,5 @@ for epoch in range(30):  # 训练30个epoch
     val_loss /= validation_steps
     print(f"Validation Loss: {val_loss}")
 
-# 保存训练好的模型
+# 保存模型
 model.save(os.path.join(output_dir, 'MRN_model.h5'))
