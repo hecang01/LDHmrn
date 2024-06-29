@@ -16,6 +16,7 @@ pos_data_dir = 'D:/DATA1/MRN/MRN_train_pos'  # 阳性样本目录
 neg_data_dir = 'D:/DATA1/MRN/MRN_train_neg'  # 阴性样本目录
 output_dir = 'D:/temp/model'
 
+
 # 数据预处理函数
 def load_data(pos_data_dir, neg_data_dir):
     images = []
@@ -42,8 +43,10 @@ def load_data(pos_data_dir, neg_data_dir):
     labels = np.array(labels).reshape(-1, 1)  # 确保标签形状
     return images, labels
 
+
 # 加载数据
 images, labels = load_data(pos_data_dir, neg_data_dir)
+
 
 # 生成掩码
 def create_center_mask(height, width, center_fraction=0.25):
@@ -52,6 +55,7 @@ def create_center_mask(height, width, center_fraction=0.25):
     start = (width - center_width) // 2
     mask[:, start:start + center_width] = 1.0
     return mask
+
 
 # 生成掩码
 img_height, img_width = 256, 256
@@ -74,11 +78,13 @@ datagen = ImageDataGenerator(
     horizontal_flip=False
 )
 
+
 # 自定义损失函数
 def custom_loss(y_true, y_pred, mask):
     bce_loss = tf.keras.losses.binary_crossentropy(y_true, y_pred)
     weighted_loss = bce_loss * mask
     return tf.reduce_mean(weighted_loss)
+
 
 # 自定义数据生成器以包含掩码
 def data_generator(images, labels, masks, batch_size, datagen):
@@ -87,6 +93,7 @@ def data_generator(images, labels, masks, batch_size, datagen):
         img_batch, label_batch = gen.next()
         mask_batch = masks[:len(img_batch)]
         yield img_batch, label_batch, mask_batch
+
 
 # 创建CNN模型
 model = Sequential([
@@ -110,6 +117,7 @@ batch_size = 64
 steps_per_epoch = len(X_train) // batch_size
 validation_steps = len(X_val) // batch_size
 
+
 # 定义训练步骤，包括掩码
 @tf.function
 def train_step(img_batch, label_batch, mask_batch):
@@ -119,6 +127,7 @@ def train_step(img_batch, label_batch, mask_batch):
     gradients = tape.gradient(loss, model.trainable_variables)
     model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
     return loss
+
 
 # 训练循环
 for epoch in range(30):  # 训练30个epoch

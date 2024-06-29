@@ -7,7 +7,6 @@ from tensorflow.keras.models import load_model
 model_path = 'D:/temp/model/7.h5'
 image_dir = 'D:/temp/1'
 output_dir = 'D:/temp/2'
-window_output_dir = 'D:/temp/windows'  # 保存小方块的目录
 
 # 滑动窗口参数
 window_size = (80, 80)  # 大小
@@ -19,35 +18,40 @@ start_color = np.array([0, 255, 0])  # BGR 绿色
 end_color = np.array([0, 0, 255])  # BGR 红色
 
 # 相似度阈值
-similarity_threshold = 0.5
+similarity_min = 0.80
+similarity_max = 0.99
 
 # 加载预训练的CNN模型
 model = load_model(model_path)
 
-# 创建保存小方块的目录
-os.makedirs(window_output_dir, exist_ok=True)
+# 创建保存标记图像的目录
+os.makedirs(output_dir, exist_ok=True)
 
-# 滑动窗口参数验算
+# 滑动窗口和标记处理
 for root, dirs, files in os.walk(image_dir):
     if files:
         for filename in files:
-            print("load:", filename)
+            print("Load:", filename)
             if filename.endswith(".png"):
                 image_path = os.path.join(root, filename)
-                original_img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)  # 读取灰度图像
-                original_img = cv2.resize(original_img, (1280, 1280))  # 确保图像大小为1280x1280
-                marked_img = original_img.copy()
+                original_img_color = cv2.imread(image_path, cv2.IMREAD_COLOR)  # 读取彩色图像
+                if original_img_color is None:
+                    print(f"No image in: {image_path}")
+                    continue
 
-                for y in range(0, 1280 - window_size[1] + 1, step_size):
-                    for x in range(0, 1280 - window_size[0] + 1, step_size):
+                # original_img_gray = cv2.cvtColor(original_img_color, cv2.COLOR_BGR2GRAY)  # 转换为灰度图像
+                # original_img_gray = cv2.resize(original_img_gray, (1024, 1024))  # 确保图像大小为1024x1024
+
+                # 扩展为三通道
+                # original_img_color = cv2.cvtColor(original_img_gray, cv2.COLOR_GRAY2RGB)
+
+                marked_img = original_img_color.copy()  # 复制原始彩色图像用于标记
+
+                for y in range(0, 1024 - window_size[1] + 1, step_size):
+                    for x in range(300, 700 - window_size[0] + 1, step_size):
                         # 裁剪窗口
-                        window = original_img[y:y + window_size[1], x:x + window_size[0]]
-                        window = (window * 255).astype(np.uint8)
-
-                        # 保存当前窗口的小方块
-                        window_filename = f"{filename}_x{x}_y{y}.png"
-                        window_path = os.path.join(window_output_dir, window_filename)
-                        cv2.imwrite(window_path, window)
+                        window = original_img_color[y:y + window_size[1], x:x + window_size[0]]
+                        window = np.clip(window, 0, 255).astype(np.uint8)
 
                         window = np.expand_dims(window, axis=0)  # 增加批量维度
                         window = np.expand_dims(window, axis=-1)  # 添加通道维度
@@ -62,8 +66,8 @@ for root, dirs, files in os.walk(image_dir):
                         center_y = y + window_size[1] // 2
 
                         # 判断相似性是否超过阈值
-                        if similarity >= similarity_threshold:
-                            ratio = (similarity - similarity_threshold) / (1 - similarity_threshold)
+                        if similarity_min <= similarity <= similarity_max:
+                            ratio = (similarity - similarity_min) / (similarity_max - similarity_min)
                             point_color = (1 - ratio) * start_color + ratio * end_color
                             point_color = tuple(map(int, point_color))
 
@@ -74,4 +78,4 @@ for root, dirs, files in os.walk(image_dir):
                 output_path = os.path.join(output_dir, os.path.relpath(root, image_dir))
                 os.makedirs(output_path, exist_ok=True)
                 cv2.imwrite(os.path.join(output_path, filename), marked_img)
-                print(f"Marked image saved at {os.path.join(output_path, filename)}")
+                print(f"Image saved to: {os.path.join(output_path, filename)}")

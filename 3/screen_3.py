@@ -14,7 +14,7 @@ input_dicom_folder = r'D:\DATA1\MRN\MRN'
 output_folder = r'D:\temp\MRN_s'
 
 # 预测阈值
-prediction_num = 0.6
+prediction_num = 0.5
 
 # 预测类别
 def predict_image_class(img_array):
@@ -25,6 +25,14 @@ def predict_image_class(img_array):
 # 将灰度图像转换为三通道
 def convert_to_rgb(img_array):
     return np.stack((img_array,) * 3, axis=-1)
+
+# 窗宽和窗位
+def apply_windowing(image, window_width, window_level):
+    lower_bound = window_level - (window_width / 2)
+    upper_bound = window_level + (window_width / 2)
+    image = np.clip(image, lower_bound, upper_bound)
+    image = (image - lower_bound) / (upper_bound - lower_bound) * 255
+    return image
 
 # 遍历DICOM文件夹
 for root, dirs, files in os.walk(input_dicom_folder):
@@ -38,6 +46,20 @@ for root, dirs, files in os.walk(input_dicom_folder):
                 print(dicom_file)
                 if hasattr(ds, 'pixel_array'):
                     image_data = ds.pixel_array
+
+                    # 默认窗宽窗位t2_de3d_we_cor_iso
+                    if protocol_name == 't2_de3d_we_cor_iso':
+                        if 'WindowWidth' in ds and 'WindowCenter' in ds:
+                            window_width = ds.WindowWidth[0] if isinstance(ds.WindowWidth, pydicom.multival.MultiValue) else ds.WindowWidth
+                            window_level = ds.WindowCenter[0] if isinstance(ds.WindowCenter, pydicom.multival.MultiValue) else ds.WindowCenter
+                        else:
+                            window_width = image_data.max() - image_data.min()
+                            window_level = (image_data.max() + image_data.min()) / 2
+                    # 窗宽窗位PROSET
+                    elif protocol_name == 'PROSET':
+                        window_width = 1500
+                        window_level = 700
+
                     scaled_image_data = np.interp(image_data, (image_data.min(), image_data.max()), (0, 255))
                     pil_image = Image.fromarray(scaled_image_data.astype(np.uint8), mode='L')
                     # 原始1024x1024的图像
